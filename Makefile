@@ -1,8 +1,5 @@
 SHELL := /bin/bash
 VENV  := .venv
-PYTHON := $(VENV)/bin/python
-PIP    := $(VENV)/bin/pip
-
 export PATH := $(abspath $(VENV))/bin:$(PATH)
 export PYTHONPATH := $(CURDIR)/src
 
@@ -12,34 +9,37 @@ all: install run
 
 venv:
 	@python3 -m venv $(VENV)
-	@echo "✔ .venv ready"
+	@echo "✔ .venv created"
 
 install: venv
-	@echo "→ Installing system packages if on Jetson…"
+	@echo "→ Jetson Nano detected? Installing system packages…"
 ifeq ($(shell uname -m), aarch64)
 	sudo apt-get update
+	# Build & Python/runtime support + audio libs + ffmpeg + pyenv prerequisites
 	sudo apt-get install -y \
-	  python3-pip python3-venv \
-	  libsndfile1 portaudio19-dev
-	@echo "→ Installing NVIDIA PyTorch wheel…"
-	$(PIP) install \
-	  https://repo.download.nvidia.com/jetson/common \
-	  -f \
-	  https://repo.download.nvidia.com/jetson/torch_stable.html \
+	  build-essential curl git libssl-dev zlib1g-dev \
+	  libbz2-dev libreadline-dev libsqlite3-dev libffi-dev \
+	  python3-venv python3-pip pyenv \
+	  libsndfile1 portaudio19-dev ffmpeg
+	@echo "→ Upgrading venv pip & wheel…"
+	pip install --upgrade pip setuptools wheel
+	@echo "→ Installing PyTorch for ARM64 via extra-index-url…"
+	pip install \
+	  --extra-index-url https://download.pytorch.org/whl/torch_stable.html \
 	  torch torchvision torchaudio
 else
-	@echo "→ Installing x86_64 PyTorch via pip…"
-	$(PIP) install torch torchvision torchaudio
+	@echo "→ x86_64/macOS detected: installing standard PyTorch…"
+	pip install torch torchvision torchaudio
 endif
-	@echo "→ Installing Python deps…"
-	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
-	@echo "✔ Dependencies installed into $(VENV)"
+
+	@echo "→ Installing Python requirements…"
+	pip install -r requirements.txt
+	@echo "✔ All dependencies installed into $(VENV)"
 
 run:
 	@cd src && python model.py
 
 clean:
-	@echo "→ Removing .venv and artifacts…"
+	@echo "→ Removing .venv, caches, artifacts…"
 	rm -rf $(VENV) build dist __pycache__ *.spec
 	@echo "✔ Cleaned up"
