@@ -22,6 +22,7 @@ ifeq ($(shell uname -m), aarch64)
 	  python3-venv python3-pip python3-dev python3-distutils \
 	  python3-setuptools python3-wheel pkg-config \
 	  libsndfile1-dev portaudio19-dev ffmpeg \
+	  rustc cargo \
 	  libblas-dev liblapack-dev libatlas-base-dev gfortran \
 	  swig cmake default-jdk-headless
 	@echo "→ Upgrading pip, setuptools, and wheel…"
