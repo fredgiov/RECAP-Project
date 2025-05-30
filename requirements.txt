@@ -1,0 +1,10 @@
+sounddevice
+soundfile
+numpy
+torch
+openai-whisper
+ollama
+colorama
+Flask
+PyYAML
+TTS
