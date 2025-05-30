@@ -1,6 +1,8 @@
 import os
 import time
 import tempfile
+import platform
+
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
@@ -13,26 +15,41 @@ from speak import speak
 init(autoreset=True)
 
 # ————————————————————————————————————————————————————————————————————————————————
-# Prerequisite: Ensure ffmpeg is installed on your Mac:
-#    brew install ffmpeg
-#
-# 1) ASR: Load Whisper medium.en on CPU to densify sparse weights, then move to MPS
-if not torch.backends.mps.is_available():
-    print(f"{Fore.RED}[Error] MPS backend not available—cannot continue.{Style.RESET_ALL}")
-    exit(1)
+# 0) Determine best device: Jetson Nano -> cuda, Mac -> mps, else cpu
+arch = platform.machine()
+if arch == "aarch64" and torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+elif torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
 
 print(f"{Fore.CYAN}Loading Whisper medium.en on CPU to patch sparse weights…{Style.RESET_ALL}")
 asr = whisper.load_model("medium.en", device="cpu")
 
-# Densify any sparse buffers so MPS inference won’t fail
+# Patch any sparse buffers before moving to our target device
 for name, buf in list(asr.named_buffers()):
     if buf.layout == torch.sparse_coo:
         dense = buf.to_dense()
         asr.register_buffer(name, dense)
 
-print(f"{Fore.CYAN}Moving Whisper model to MPS…{Style.RESET_ALL}")
-asr = asr.to("mps")
+print(f"{Fore.CYAN}Moving Whisper model to {device.upper()}…{Style.RESET_ALL}")
+asr = asr.to(device)
 
+# ————————————————————————————————————————————————————————————————————————————————
+# Detect if a microphone is available
+try:
+    input_devices = [d for d in sd.query_devices() if d['max_input_channels'] > 0]
+    has_mic = len(input_devices) > 0
+except Exception:
+    has_mic = False
+
+if not has_mic:
+    print(f"{Fore.YELLOW}[Warning] No microphone detected. Falling back to text input.{Style.RESET_ALL}")
+
+# ————————————————————————————————————————————————————————————————————————————————
 def get_voice_input(
     timeout: float = 255.0,        # max recording length (seconds)
     silence_duration: float = 2.5, # stop after this much continuous quiet
@@ -44,11 +61,11 @@ def get_voice_input(
     Record until you stop speaking (i.e. `silence_duration` of quiet)
     or until `timeout` seconds elapse, then transcribe via Whisper.
     """
-    chunk_samples    = int(fs * chunk_ms / 1000)
-    max_silent_chunks = int(silence_duration * 1000 / chunk_ms)
+    chunk_samples     = int(fs * chunk_ms / 1000)
+    max_silent_frames = int(silence_duration * 1000 / chunk_ms)
 
     frames = []
-    silent_chunks = 0
+    silent_count = 0
     speaking_started = False
     start_time = time.time()
 
@@ -58,29 +75,24 @@ def get_voice_input(
             data, _ = stream.read(chunk_samples)
             frames.append(data.copy())
 
-            # simple RMS-style amplitude check
             amp = np.abs(data).mean()
             if amp > threshold:
                 speaking_started = True
-                silent_chunks = 0
+                silent_count = 0
             elif speaking_started:
-                silent_chunks += 1
+                silent_count += 1
 
-            # stop if we've been quiet long enough, or hit the overall timeout
-            if (speaking_started and silent_chunks > max_silent_chunks) \
+            if (speaking_started and silent_count > max_silent_frames) \
                or (time.time() - start_time > timeout):
                 break
 
-    # stitch all the chunks together
     recording = np.concatenate(frames, axis=0)
-
-    # write to temp WAV & run Whisper exactly as before
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         sf.write(tmp.name, recording, fs)
-        print(f"{Fore.BLUE}Transcribing with Whisper (medium.en) on MPS…{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}Transcribing with Whisper (medium.en) on {device.upper()}…{Style.RESET_ALL}")
         result = asr.transcribe(
             tmp.name,
-            fp16=False,
+            fp16=(device != "cpu"),  # use fp16 on GPU/MPS
             condition_on_previous_text=False
         )
     os.remove(tmp.name)
@@ -93,11 +105,8 @@ def get_voice_input(
     return text
 
 # ————————————————————————————————————————————————————————————————————————————————
-# 2) Ollama Chat setup with concise‐by‐default system prompt
-
-# Make sure you've run `ollama serve` in another terminal
+# 1) Ollama Chat setup
 client = ollama.Client()
-
 conversation_history = [
     {
         "role": "system",
@@ -105,14 +114,13 @@ conversation_history = [
             "You are RECAP, an educational AI assistant. "
             "Answer concisely by default. If the user asks for details or examples, "
             "then provide a more in-depth explanation. "
-            "By default you are to respond in English, unless instructed otherwise."
+            "By default respond in English unless instructed otherwise."
         )
     }
 ]
 
 # ————————————————————————————————————————————————————————————————————————————————
-# 3) Main RECAP loop
-
+# 2) Main RECAP loop
 greeting = "Hello! I’m RECAP, your AI assistant. How can I help you today?"
 print(f"{Fore.CYAN}RECAP: {greeting}{Style.RESET_ALL}")
 speak(greeting)
@@ -154,46 +162,33 @@ FAREWELL_TOKENS = [
 ]
 
 while True:
-    user_text = get_voice_input()
+    if has_mic:
+        user_text = get_voice_input()
+    else:
+        user_text = input(f"{Fore.CYAN}Type your input:{Style.RESET_ALL} ")
+
     if not user_text:
         continue
 
     lower_user = user_text.lower().replace("'", "")
-
-    # if the user *says* any farewell token anywhere, exit
-    if any(token in lower_user for token in FAREWELL_TOKENS):
-        # Ask the model as a user to craft a single, concise farewell
-        farewell_prompt = (
-            "The user has indicated they are done. "
-            "Please respond with a single, concise, friendly farewell and nothing else."
+    if any(tok in lower_user for tok in FAREWELL_TOKENS):
+        prompt = (
+            "The user is done. Respond with one concise, friendly farewell."
         )
-        messages_for_farewell = [
-            conversation_history[0],  # original system prompt
-            {"role": "user", "content": farewell_prompt}
-        ]
-        response = client.chat(
-            model="mistral",
-            messages=messages_for_farewell,
-        )
-        farewell = response["message"]["content"].strip()
-
+        msgs = [conversation_history[0], {"role": "user", "content": prompt}]
+        resp = client.chat(model="mistral", messages=msgs)
+        farewell = resp["message"]["content"].strip()
         print(f"{Fore.MAGENTA}RECAP: {farewell}{Style.RESET_ALL}")
         speak(farewell)
         break
 
     conversation_history.append({"role": "user", "content": user_text})
-    response = client.chat(
-        model="mistral",
-        messages=conversation_history,
-    )
-    bot_reply = response["message"]["content"].strip()
+    resp = client.chat(model="mistral", messages=conversation_history)
+    bot_reply = resp["message"]["content"].strip()
 
     print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
     speak(bot_reply)
 
-    # NEW: if the model’s reply itself is a farewell, stop
-    lower_reply = bot_reply.lower()
-    if any(token in lower_reply for token in FAREWELL_TOKENS):
+    if any(tok in bot_reply.lower() for tok in FAREWELL_TOKENS):
         break
-
     conversation_history.append({"role": "assistant", "content": bot_reply})
