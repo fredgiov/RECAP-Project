@@ -115,6 +115,7 @@ conversation_history = [
             "Answer concisely by default. If the user asks for details or examples, "
             "then provide a more in-depth explanation. "
             "By default respond in English unless instructed otherwise."
+            "Avoid speaking in bulletted points."
         )
     }
 ]
@@ -158,6 +159,10 @@ FAREWELL_TOKENS = [
     "see you later",
     "take care",
     "have a great day",
+    "have a fantastic day",
+    "have a good day",
+    "take care",
+    "have a good one",
     "it was a pleasure"
 ]
 
@@ -170,7 +175,7 @@ while True:
     if not user_text:
         continue
 
-    lower_user = user_text.lower().replace("'", "")
+    lower_user = user_text.lower()
     if any(tok in lower_user for tok in FAREWELL_TOKENS):
         prompt = (
             "The user is done. Respond with one concise, friendly farewell."
