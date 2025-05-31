@@ -113,7 +113,7 @@ conversation_history = [
         "content": (
             "You are RECAP, an educational AI assistant. "
             "Answer concisely by default. If the user asks for details or examples, "
-            "then provide a more in-depth explanation. "
+            "then provide a more in-depth explanation."
             "By default respond in English unless instructed otherwise."
             "Avoid speaking in bulletted points."
         )
@@ -128,7 +128,7 @@ speak(greeting)
 
 FAREWELL_TOKENS = [
     # explicit exits
-    "exit", "quit", "farewell",
+    "exit", "quit", "farewell", "goodbye"
 
     # complete “thank you” closers
     "thank you for your help",
@@ -137,6 +137,7 @@ FAREWELL_TOKENS = [
     "thanks for everything",
     "thanks, that's all",
     "thank you, that's all",
+    "that'll be all"
 
     # indicate no more needs
     "that's all i needed",
