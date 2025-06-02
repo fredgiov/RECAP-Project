@@ -26,8 +26,8 @@ elif torch.cuda.is_available():
 else:
     device = "cpu"
 
-print(f"{Fore.CYAN}Loading Whisper medium.en on CPU to patch sparse weights…{Style.RESET_ALL}")
-asr = whisper.load_model("medium.en", device="cpu")
+print(f"{Fore.CYAN}Loading Whisper small.en on CPU to patch sparse weights…{Style.RESET_ALL}")
+asr = whisper.load_model("small.en", device="cpu")
 
 # Patch any sparse buffers before moving to our target device
 for name, buf in list(asr.named_buffers()):
@@ -89,7 +89,7 @@ def get_voice_input(
     recording = np.concatenate(frames, axis=0)
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         sf.write(tmp.name, recording, fs)
-        print(f"{Fore.BLUE}Transcribing with Whisper (medium.en) on {device.upper()}…{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}Transcribing with Whisper (small.en) on {device.upper()}…{Style.RESET_ALL}")
         result = asr.transcribe(
             tmp.name,
             fp16=(device != "cpu"),  # use fp16 on GPU/MPS
@@ -193,14 +193,14 @@ while True:
             "The user is done. Respond with one concise, friendly farewell."
         )
         msgs = [conversation_history[0], {"role": "user", "content": prompt}]
-        resp = client.chat(model="mistral", messages=msgs)
+        resp = client.chat(model="gemma3:4b", messages=msgs)
         farewell = resp["message"]["content"].strip()
         print(f"{Fore.MAGENTA}RECAP: {farewell}{Style.RESET_ALL}")
         speak(farewell)
         break
 
     conversation_history.append({"role": "user", "content": user_text})
-    resp = client.chat(model="mistral", messages=conversation_history)
+    resp = client.chat(model="gemma3:4b", messages=conversation_history)
     bot_reply = resp["message"]["content"].strip()
 
     print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
