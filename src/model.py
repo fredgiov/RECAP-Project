@@ -111,11 +111,20 @@ conversation_history = [
     {
         "role": "system",
         "content": (
-            "You are RECAP, an educational AI assistant. "
+            "You are RECAP, an educational AI assistant."
+            "You were developed by the ATS team at the University of Delaware (UD) to work in conjunction with, "
+            "other UD services such as StudyAIDE and UDcapture in order to help students with their learning, studying,"
+            "and understanding of their classes."
+            "UDcapture is a service that teachers can enroll in in order to record and post lectures that they teach for,"
+            "their students to access in case of not being able to attend class or for extra review."
+            "StudyAIDE is a service that teachers and students will be able to use to train you on their material, which,"
+            "in turn, you will be able to access and return study options to students as well as recaps on previous lecture,"
+            "material studied in class."
             "Answer concisely by default. If the user asks for details or examples, "
             "then provide a more in-depth explanation."
             "By default respond in English unless instructed otherwise."
             "Avoid speaking in bulletted points."
+            "Your goal isn't to return any of these points verbatim, but as a general review of what was given."
         )
     }
 ]
@@ -128,7 +137,7 @@ speak(greeting)
 
 FAREWELL_TOKENS = [
     # explicit exits
-    "exit", "quit", "farewell", "goodbye"
+    "exit", "quit", "farewell", "goodbye",
 
     # complete “thank you” closers
     "thank you for your help",
@@ -137,7 +146,7 @@ FAREWELL_TOKENS = [
     "thanks for everything",
     "thanks, that's all",
     "thank you, that's all",
-    "that'll be all"
+    "that'll be all",
 
     # indicate no more needs
     "that's all i needed",
@@ -164,26 +173,21 @@ FAREWELL_TOKENS = [
     "have a good day",
     "take care",
     "have a good one",
-    "it was a pleasure"
+    "it was a pleasure",
+    "i appreciate your help",
+    "have a good rest of your day"
 ]
 
 while True:
-    # ── Try voice first; if it fails, fall back to typing:
     if has_mic:
-        try:
-            user_text = get_voice_input()
-        except Exception as e:
-            print(f"{Fore.YELLOW}[Warning] Voice input failed ({e}). Switching to text input.{Style.RESET_ALL}")
-            user_text = input(f"{Fore.CYAN}Type your input: {Style.RESET_ALL}")
+        user_text = get_voice_input()
     else:
-        user_text = input(f"{Fore.CYAN}Type your input: {Style.RESET_ALL}")
+        user_text = input(f"{Fore.CYAN}Type your input:{Style.RESET_ALL} ")
 
-    # If user just hit enter, loop again:
     if not user_text:
         continue
 
     lower_user = user_text.lower()
-    # Check for a farewell token:
     if any(tok in lower_user for tok in FAREWELL_TOKENS):
         prompt = (
             "The user is done. Respond with one concise, friendly farewell."
@@ -195,7 +199,6 @@ while True:
         speak(farewell)
         break
 
-    # Otherwise, normal chat flow:
     conversation_history.append({"role": "user", "content": user_text})
     resp = client.chat(model="mistral", messages=conversation_history)
     bot_reply = resp["message"]["content"].strip()
@@ -203,7 +206,6 @@ while True:
     print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
     speak(bot_reply)
 
-    # If the **model’s reply** itself contains a farewell, break:
     if any(tok in bot_reply.lower() for tok in FAREWELL_TOKENS):
         break
     conversation_history.append({"role": "assistant", "content": bot_reply})
