@@ -193,14 +193,14 @@ while True:
             "The user is done. Respond with one concise, friendly farewell."
         )
         msgs = [conversation_history[0], {"role": "user", "content": prompt}]
-        resp = client.chat(model="gemma3:4b", messages=msgs)
+        resp = client.chat(model="gemma3:1b", messages=msgs)
         farewell = resp["message"]["content"].strip()
         print(f"{Fore.MAGENTA}RECAP: {farewell}{Style.RESET_ALL}")
         speak(farewell)
         break
 
     conversation_history.append({"role": "user", "content": user_text})
-    resp = client.chat(model="gemma3:4b", messages=conversation_history)
+    resp = client.chat(model="gemma3:1b", messages=conversation_history)
     bot_reply = resp["message"]["content"].strip()
 
     print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
