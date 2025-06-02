@@ -168,15 +168,22 @@ FAREWELL_TOKENS = [
 ]
 
 while True:
+    # ── Try voice first; if it fails, fall back to typing:
     if has_mic:
-        user_text = get_voice_input()
+        try:
+            user_text = get_voice_input()
+        except Exception as e:
+            print(f"{Fore.YELLOW}[Warning] Voice input failed ({e}). Switching to text input.{Style.RESET_ALL}")
+            user_text = input(f"{Fore.CYAN}Type your input: {Style.RESET_ALL}")
     else:
-        user_text = input(f"{Fore.CYAN}Type your input:{Style.RESET_ALL} ")
+        user_text = input(f"{Fore.CYAN}Type your input: {Style.RESET_ALL}")
 
+    # If user just hit enter, loop again:
     if not user_text:
         continue
 
     lower_user = user_text.lower()
+    # Check for a farewell token:
     if any(tok in lower_user for tok in FAREWELL_TOKENS):
         prompt = (
             "The user is done. Respond with one concise, friendly farewell."
@@ -188,6 +195,7 @@ while True:
         speak(farewell)
         break
 
+    # Otherwise, normal chat flow:
     conversation_history.append({"role": "user", "content": user_text})
     resp = client.chat(model="mistral", messages=conversation_history)
     bot_reply = resp["message"]["content"].strip()
@@ -195,6 +203,7 @@ while True:
     print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
     speak(bot_reply)
 
+    # If the **model’s reply** itself contains a farewell, break:
     if any(tok in bot_reply.lower() for tok in FAREWELL_TOKENS):
         break
     conversation_history.append({"role": "assistant", "content": bot_reply})
