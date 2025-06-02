@@ -1,5 +1,6 @@
-import os
+# import os
 import platform
+import subprocess
 from TTS.api import TTS
 
 # Preload Coqui TTS for non-macOS fallback
@@ -10,7 +11,7 @@ tts = TTS(
 )
 
 # Map macOS voices
-_SIRI_VOICE = "Samantha"  # or try "Siri" / "Victoria" / "Alex" etc.
+_SIRI_VOICE = "Alex"
 
 def speak(text: str):
     """
@@ -20,17 +21,19 @@ def speak(text: str):
     """
     system = platform.system()
     if system == "Darwin":
-        # macOS built-in TTS
-        # you can list available voices via: `say -v ?`
-        os.system(f'say -v "{_SIRI_VOICE}" {text!r}')
+        # macOS built-in TTS using subprocess to avoid shell issues
+        subprocess.run(["say", "-v", _SIRI_VOICE, text])
     else:
         # fallback for Linux/Windows
         out = "recap_speech.wav"
         tts.tts_to_file(text=text, file_path=out)
         if system == "Linux":
-            os.system(f"aplay {out}")
+            subprocess.run(["aplay", out])
         elif system == "Windows":
-            os.system(f'powershell -c (New-Object Media.SoundPlayer "{out}").PlaySync()')
+            subprocess.run([
+                "powershell",
+                "-c",
+                f'(New-Object Media.SoundPlayer "{out}").PlaySync()'
+            ])
         else:
-            # last resort
-            os.system(f"play {out}")  # requires sox
+            subprocess.run(["play", out])  # requires sox
