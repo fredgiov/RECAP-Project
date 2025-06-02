@@ -2,6 +2,8 @@ import os
 import time
 import tempfile
 import platform
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import sounddevice as sd
 import soundfile as sf
@@ -41,7 +43,7 @@ asr = asr.to(device)
 # ————————————————————————————————————————————————————————————————————————————————
 # Detect if a microphone is available
 try:
-    input_devices = [d for d in sd.query_devices() if d['max_input_channels'] > 0]
+    input_devices = [d for d in sd.query_devices() if d["max_input_channels"] > 0]
     has_mic = len(input_devices) > 0
 except Exception:
     has_mic = False
@@ -70,7 +72,7 @@ def get_voice_input(
     start_time = time.time()
 
     print(f"{Fore.CYAN}Listening… speak, then stay silent to end.{Style.RESET_ALL}")
-    with sd.InputStream(samplerate=fs, channels=1, dtype='int16') as stream:
+    with sd.InputStream(samplerate=fs, channels=1, dtype="int16") as stream:
         while True:
             data, _ = stream.read(chunk_samples)
             frames.append(data.copy())
@@ -125,11 +127,11 @@ conversation_history = [
             "By default respond in English unless instructed otherwise."
             "Avoid speaking in bulletted points."
             "Your goal isn't to return any of these points verbatim, but as a general review of what was given."
+            "If you idenfity that a user tries to say goodbye in a language other than english, instruct them to tell you goodbye in english instead."
         )
     }
 ]
 
-# ————————————————————————————————————————————————————————————————————————————————
 # 2) Main RECAP loop
 greeting = "Hello! I’m RECAP, your AI assistant. How can I help you today?"
 print(f"{Fore.CYAN}RECAP: {greeting}{Style.RESET_ALL}")
@@ -178,34 +180,41 @@ FAREWELL_TOKENS = [
     "have a good rest of your day"
 ]
 
-while True:
-    if has_mic:
-        user_text = get_voice_input()
-    else:
-        user_text = input(f"{Fore.CYAN}Type your input:{Style.RESET_ALL} ")
+try:
+    while True:
+        if has_mic:
+            user_text = get_voice_input()
+        else:
+            user_text = input(f"{Fore.CYAN}Type your input:{Style.RESET_ALL} ")
 
-    if not user_text:
-        continue
+        if not user_text:
+            continue
 
-    lower_user = user_text.lower()
-    if any(tok in lower_user for tok in FAREWELL_TOKENS):
-        prompt = (
-            "The user is done. Respond with one concise, friendly farewell."
-        )
-        msgs = [conversation_history[0], {"role": "user", "content": prompt}]
-        resp = client.chat(model="llama3.2:3b", messages=msgs)
-        farewell = resp["message"]["content"].strip()
-        print(f"{Fore.MAGENTA}RECAP: {farewell}{Style.RESET_ALL}")
-        speak(farewell)
-        break
+        lower_user = user_text.lower()
+        if any(tok in lower_user for tok in FAREWELL_TOKENS):
+            # Final farewell (synchronous so we can then exit cleanly)
+            conversation_history.append({"role": "user", "content": user_text})
+            prompt = "The user is done. Respond with one concise, friendly farewell."
+            msgs = [conversation_history[0], {"role": "user", "content": prompt}]
+            resp = client.chat(model="llama3.2:3b", messages=msgs)
+            farewell = resp["message"]["content"].strip()
+            print(f"{Fore.MAGENTA}RECAP: {farewell}{Style.RESET_ALL}")
+            speak(farewell)
+            break
 
-    conversation_history.append({"role": "user", "content": user_text})
-    resp = client.chat(model="llama3.2:3b", messages=conversation_history)
-    bot_reply = resp["message"]["content"].strip()
+        # Synchronous: append user → chat → speak → append assistant
+        conversation_history.append({"role": "user", "content": user_text})
+        resp = client.chat(model="llama3.2:3b", messages=conversation_history)
+        bot_reply = resp["message"]["content"].strip()
 
-    print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
-    speak(bot_reply)
+        print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
+        # **Now we block** here until speak() finishes
+        speak(bot_reply)
 
-    if any(tok in bot_reply.lower() for tok in FAREWELL_TOKENS):
-        break
-    conversation_history.append({"role": "assistant", "content": bot_reply})
+        if any(tok in bot_reply.lower() for tok in FAREWELL_TOKENS):
+            break
+
+        conversation_history.append({"role": "assistant", "content": bot_reply})
+
+except KeyboardInterrupt:
+    print(f"\n{Fore.RED}Interrupted! Exiting...{Style.RESET_ALL}")
