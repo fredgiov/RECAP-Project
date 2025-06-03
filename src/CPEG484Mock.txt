@@ -1,0 +1,106 @@
+CPEG484 with Professor K
+
+Course: Advanced Training Techniques - CPEG484Professor: Professor KClass Day: Monday, April 21, 2025
+
+Lecture Topic: Introduction to Advanced Model Training
+Key Topics Covered:
+	•	Overview of the training lifecycle for AI models
+	•	Review of supervised, unsupervised, and reinforcement learning
+	•	Evaluation metrics: accuracy, loss, F1, precision, recall
+	•	Importance of dataset quality and data preprocessing
+Notes:
+	•	A strong dataset is more valuable than a complex model.
+	•	Train/test split (typically 80/20) is essential to assess generalization.
+	•	Noise in data is often more damaging than a weaker model architecture.
+Assignment:
+	•	Read: "On the Importance of Data Quality in AI" (linked in class portal)
+	•	Write a 1-page summary comparing the pros and cons of supervised vs unsupervised learning.
+Reminder: Office hours are Wednesday 2–4 PM in Spencer Lab Room 210.
+Course: Advanced Training Techniques - CPEG484Professor: Professor KClass Day: Wednesday, April 23, 2025
+
+Lecture Topic: Model Architectures and Transfer Learning
+Key Topics Covered:
+	•	Review of popular architectures: CNNs, RNNs, Transformers
+	•	When to use shallow vs deep architectures
+	•	Introduction to Transfer Learning
+	•	Fine-tuning vs Feature Extraction
+Important Points:
+	•	Transformers have become the dominant architecture for NLP tasks.
+	•	Transfer learning saves resources by reusing pretrained weights.
+	•	Fine-tuning adjusts all layers; feature extraction freezes base layers.
+In-Class Activity:
+	•	Hands-on Colab exercise using HuggingFace Transformers
+	•	Students fine-tuned a BERT model on a sentiment analysis dataset
+Assignment:
+	•	Choose an open-source model from HuggingFace and prepare a short summary (1 paragraph) of how it can be adapted for a different task.
+Reminder: Quiz next class on architecture types and transfer learning.
+Course: Advanced Training Techniques - CPEG484 Professor: Professor K Class Day: Friday, April 25, 2025
+
+Lecture Topic: Optimization Algorithms and Training Schedules
+Key Topics Covered:
+	•	Gradient Descent and its variants (SGD, Adam, RMSprop)
+	•	Learning rate scheduling: step decay, cosine annealing, warm restarts
+	•	Regularization techniques: dropout, L2 regularization, early stopping
+	•	Loss functions: Cross-Entropy, MSE, MAE, Huber loss
+Important Insights:
+	•	Adam is preferred for NLP; SGD + momentum works well in vision
+	•	Learning rate can be more important than model depth
+	•	Overfitting often solved by combining regularization + early stopping
+Hands-On:
+	•	Implemented a training loop with variable learning rate
+	•	Compared training curves of Adam vs SGD
+Assignment:
+	•	Tune the learning rate of your model on a Kaggle dataset of your choice and write a reflection (300 words) on the impact.
+Note: Next week begins the "fine-tune and deploy" segment.
+
+Course: Advanced Training Techniques - CPEG484 Professor: Professor K Class Day: Wednesday, April 23, 2025
+
+Lecture Topic: Model Architectures and Transfer Learning
+Key Topics Covered:
+	•	Review of model types:
+	◦	CNNs: primarily used for image tasks (e.g., classification, detection)
+	◦	RNNs: used for sequence data (e.g., text, time series)
+	◦	Transformers: self-attention mechanisms allow scalability to long sequences
+	•	Depth vs width:
+	◦	Deep models learn hierarchical features, but can overfit on small data
+	◦	Wide models are more robust to noise but may underperform on complex patterns
+	•	Transfer Learning:
+	◦	Strategy of reusing weights from pretrained models
+	◦	Speeds up convergence and improves performance with limited data
+	•	Fine-tuning vs feature extraction:
+	◦	Fine-tuning: unfreeze layers, retrain on new task
+	◦	Feature extraction: freeze base, use output embeddings as features
+Hands-On Lab:
+	•	Students fine-tuned a pretrained BERT base model on IMDB sentiment data
+	•	Observed training/validation curves and learned how to spot overfitting
+Challenges Discussed:
+	•	Catastrophic forgetting: when fine-tuned models lose prior knowledge
+	•	Domain shift: when pretraining data differs significantly from target data
+Assignment:
+	•	Choose an open-source model from HuggingFace
+	•	Prepare a short summary describing how that model could be adapted for a new task (include changes needed in tokenizer, layers, and head)
+Reminder: Quiz next class on architecture comparisons, transfer learning strategies, and when to fine-tune vs extract features.
+
+Course: Advanced Training Techniques - CPEG484 Professor: Professor K Class Day: Wednesday, April 30, 2025
+
+Lecture Topic: Large Language Models and Alignment Techniques
+Key Topics Covered:
+	•	Overview of alignment challenges in LLMs (bias, hallucination, safety)
+	•	Reinforcement Learning with Human Feedback (RLHF)
+	•	Prompt engineering vs system-level constraints
+	•	Safety protocols: filtering, refusal mechanisms, reward shaping
+Key Terms Introduced:
+	•	Constitutional AI
+	•	Preference modeling
+	•	Reward models
+Case Studies:
+	•	OpenAI's InstructGPT and ChatGPT
+	•	Anthropic’s Claude alignment methods
+In-Class Discussion:
+	•	Debated tradeoffs between expressiveness and safety
+	•	Ethics of human-in-the-loop training and feedback injection
+Assignment:
+	•	Write a 2-paragraph response evaluating whether RLHF can fully align LLMs with human values. Support your argument with a real-world example.
+Next Class (Final):
+	•	Present and demo your fine-tuned model with an explanation of alignment or safety decisions you implemented.
+

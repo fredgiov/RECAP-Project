@@ -2,8 +2,6 @@ import os
 import time
 import tempfile
 import platform
-import threading
-from concurrent.futures import ThreadPoolExecutor
 
 import sounddevice as sd
 import soundfile as sf
@@ -50,6 +48,16 @@ except Exception:
 
 if not has_mic:
     print(f"{Fore.YELLOW}[Warning] No microphone detected. Falling back to text input.{Style.RESET_ALL}")
+
+txt_path = os.path.join(
+    os.path.dirname(__file__),
+    "CPEG484Mock.txt"
+)
+try:
+    with open(txt_path, "r", encoding="utf-8") as f:
+        class_material = f.read()
+except FileNotFoundError:
+    raise RuntimeError(f"Cannot find {txt_path}. Make sure the filename is correct.")
 
 # ————————————————————————————————————————————————————————————————————————————————
 def get_voice_input(
@@ -109,28 +117,38 @@ def get_voice_input(
 # ————————————————————————————————————————————————————————————————————————————————
 # 1) Ollama Chat setup
 client = ollama.Client()
-conversation_history = [
-    {
-        "role": "system",
-        "content": (
-            "You are RECAP, an educational AI assistant."
-            "You were developed by the ATS team at the University of Delaware (UD) to work in conjunction with, "
-            "other UD services such as StudyAIDE and UDcapture in order to help students with their learning, studying,"
-            "and understanding of their classes."
-            "UDcapture is a service that teachers can enroll in in order to record and post lectures that they teach for,"
-            "their students to access in case of not being able to attend class or for extra review."
-            "StudyAIDE is a service that teachers and students will be able to use to train you on their material, which,"
-            "in turn, you will be able to access and return study options to students as well as recaps on previous lecture,"
-            "material studied in class."
-            "Answer concisely by default. If the user asks for details or examples, "
-            "then provide a more in-depth explanation."
-            "By default respond in English unless instructed otherwise."
-            "Avoid speaking in bulletted points."
-            "Your goal isn't to return any of these points verbatim, but as a general review of what was given."
-            "If you idenfity that a user tries to say goodbye in a language other than english, instruct them to tell you goodbye in english instead."
-        )
-    }
-]
+
+old_system_content = (
+    "You are RECAP, an educational AI assistant. "
+    "You were developed by the ATS team at the University of Delaware (UD) to work in conjunction with, "
+    "other UD services such as StudyAIDE and UDcapture in order to help students with their learning, studying, "
+    "and understanding of their classes. "
+    "UDcapture is a service that teachers can enroll in in order to record and post lectures that they teach for, "
+    "their students to access in case of not being able to attend class or for extra review. "
+    "StudyAIDE is a service that teachers and students will be able to use to train you on their material, which, "
+    "in turn, you will be able to access and return study options to students as well as recaps on previous lecture, "
+    "material studied in class. "
+    "Answer concisely by default. If the user asks for details or examples, then provide a more in-depth explanation. "
+    "By default respond in English unless instructed otherwise. Avoid speaking in bulleted points. "
+    "Your goal isn't to return any of these points verbatim, but as a general review of what was given."
+)
+
+system_message = {
+    "role": "system",
+    "content": (
+        f"{old_system_content}\n\n"
+        f"THIS IS YOUR CLASS MATERIAL (DO NOT INVENT BEYOND IT):\n\n"
+        f"----- CLASS MATERIAL STARTS HERE -----\n\n"
+        f"{class_material}\n\n"
+        f"----- CLASS MATERIAL ENDS HERE -----\n\n"
+        f"Whenever you answer, your explanation MUST be rooted in the above class material. "
+        f"Do not hallucinate or introduce facts not present in that text. "
+        f"If the user requests examples or deeper details, pull them strictly from this content. "
+        f"Respond in English by default; avoid bullet points unless absolutely necessary."
+    )
+}
+
+conversation_history = [system_message]
 
 # 2) Main RECAP loop
 greeting = "Hello! I’m RECAP, your AI assistant. How can I help you today?"
@@ -208,12 +226,7 @@ try:
         bot_reply = resp["message"]["content"].strip()
 
         print(f"{Fore.GREEN}RECAP: {bot_reply}{Style.RESET_ALL}")
-        # **Now we block** here until speak() finishes
         speak(bot_reply)
-
-        if any(tok in bot_reply.lower() for tok in FAREWELL_TOKENS):
-            break
-
         conversation_history.append({"role": "assistant", "content": bot_reply})
 
 except KeyboardInterrupt:
