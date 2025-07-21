@@ -3,7 +3,7 @@ name: Sync to Mirror Repo
 on:
   push:
     branches:
-      - main  # Change this if your main branch has a different name
+      - main
 
 jobs:
   sync:
@@ -28,8 +28,12 @@ jobs:
             echo "✅ TARGET_REPO_TOKEN is present"
           fi
 
+          echo "🔍 Verifying final git command input..."
+          REMOTE_URL="https://x-access-token:$TARGET_REPO_TOKEN@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git"
+          echo "REMOTE_URL is: $REMOTE_URL"
+
           echo "🔗 Adding Jetson_Nano_Projects as a remote..."
-          git remote add mirror https://x-access-token:$TARGET_REPO_TOKEN@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
+          git remote add mirror "$REMOTE_URL"
 
           echo "🚀 Pushing to mirror..."
           git push mirror main --force
