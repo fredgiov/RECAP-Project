@@ -1,0 +1,28 @@
+name: Sync to Mirror Repo
+
+on:
+  push:
+    branches:
+      - main  # Change this if your main branch has a different name
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your code
+        uses: actions/checkout@v3
+
+      - name: Push code to Repo B
+        env:
+          TARGET_REPO_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
+        run: |
+          # Set your GitHub name and email so Git knows who's pushing
+          git config --global user.name "Federico Giovannitti"
+          git config --global user.email "fredgiov@udel.edu"
+
+          # Add the second repo as a remote named "mirror"
+          git remote add mirror https://x-access-token:${TARGET_REPO_TOKEN}@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
+
+          # Push your code to the mirror repo
+          git push mirror main --force
