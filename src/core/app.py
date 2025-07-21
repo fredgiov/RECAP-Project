@@ -46,7 +46,7 @@ app.mount(
     name="static",
 )
 
-# Globals !!!
+# Globals !!!!
 asr = None
 device = None
 client: AsyncClient

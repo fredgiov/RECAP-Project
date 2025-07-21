@@ -22,7 +22,7 @@ jobs:
           git config --global user.email "fredgiov@udel.edu"
 
           # Add the second repo as a remote named "mirror"
-          git remote add mirror https://x-access-token:${TARGET_REPO_TOKEN}@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
+          git remote add mirror https://x-access-token:$TARGET_REPO_TOKEN@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
 
           # Push your code to the mirror repo
           git push mirror main --force
