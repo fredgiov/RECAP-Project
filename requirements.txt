@@ -1,10 +1,31 @@
-sounddevice
-soundfile
-numpy
-torch
-openai-whisper
-ollama
-colorama
-Flask
-PyYAML
-TTS
+# — Core audio & playback
+sounddevice>=0.4.6
+soundfile>=0.10.3.post1
+
+# — Numerical & ML frameworks
+numpy>=1.25.2                # let it float up into 1.x — coqui-tts on PyPI will pull in the correct range
+torch>=2.0.1
+torchaudio>=2.0.2
+
+# — Whisper ASR
+openai-whisper>=20230117
+
+# — Ollama chat client
+ollama>=0.5.1
+
+# — Build tool for coqui-tts
+cython>=3.0.0
+
+# — Web/server & config
+fastapi
+uvicorn
+flask
+
+# — CLI utils & hotkeys
+colorama>=0.4.6
+keyboard<=0.13.5             # the last version actually on PyPI for Python 3.10
+pynput>=1.7.6
+boto3==1.38.45
+awscli>=1.40.44
+argparse==1.4.0
+watchdog==6.0.0

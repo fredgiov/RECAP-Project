@@ -1,52 +1,57 @@
 SHELL := /bin/bash
-VENV  := .venv
+VENV := .venv
+OLLAMA_MODEL ?= gemma3:4b
 
+# Ensure project venv bin is first on PATH for all make recipes
 export PATH := $(abspath $(VENV))/bin:$(PATH)
 export PYTHONPATH := $(CURDIR)/src
 
-.PHONY: all venv install run clean
+.PHONY: all setup venv install update-settings ollama-pull ollama-serve run shell clean
 
-all: install run
+all: setup ollama-pull
+
+setup: install update-settings
 
 venv:
 	@python3 -m venv $(VENV)
 	@echo "✔ .venv created"
 
 install: venv
-ifeq ($(shell uname -m), aarch64)
-	@echo "→ Jetson Nano detected: installing system packages…"
-	sudo apt-get update
-	sudo apt-get install -y \
-	  build-essential curl git libssl-dev zlib1g-dev \
-	  libbz2-dev libreadline-dev libsqlite3-dev libffi-dev liblzma-dev \
-	  python3-venv python3-pip python3-dev python3-distutils \
-	  python3-setuptools python3-wheel pkg-config \
-	  libsndfile1-dev portaudio19-dev ffmpeg \
-	  rustc cargo \
-	  libblas-dev liblapack-dev libatlas-base-dev gfortran \
-	  swig cmake default-jdk-headless
-	@echo "→ Upgrading pip, setuptools, and wheel…"
-	pip install --upgrade pip setuptools wheel
-	@echo "→ Installing ARM64 PyTorch via extra-index-url…"
-	pip install \
-	  --extra-index-url https://download.pytorch.org/whl/torch_stable.html \
-	  torch torchvision torchaudio
-	@echo "→ Installing Python dependencies (except TTS)…"
-	pip install -r requirements.txt
-	@echo "→ Installing Coqui TTS with no dependencies…"
-	pip install TTS --no-deps
-else
-	@echo "→ Non-ARM64 host: installing standard PyTorch…"
-	pip install torch torchvision torchaudio
-	@echo "→ Installing Python dependencies…"
-	pip install -r requirements.txt
-endif
-	@echo "✔ All dependencies installed into $(VENV)"
+	@echo "→ Detected macOS: installing Homebrew packages…"
+	@brew update || true
+	@brew install python3 portaudio ffmpeg ollama
+	@echo "→ Installing Python packages…"
+	@. $(VENV)/bin/activate && pip install --upgrade pip setuptools wheel
+	@. $(VENV)/bin/activate && pip install -r requirements.txt openai-whisper sounddevice soundfile ollama
+	@echo "✔ Dependencies installed into $(VENV). You need to initialize aws-polly by using aws configure."
+
+update-settings:
+	@mkdir -p .vscode
+	@echo "{" > .vscode/settings.json
+	@echo "  \"python.defaultInterpreterPath\": \"$(CURDIR)/.venv/bin/python\"," >> .vscode/settings.json
+	@echo "  \"python.terminal.activateEnvironment\": true," >> .vscode/settings.json
+	@echo "  \"python.analysis.extraPaths\": [\"$(CURDIR)/src\"]" >> .vscode/settings.json
+	@echo "}" >> .vscode/settings.json
+	@echo "✔ VS Code settings created"
+
+ollama-pull:
+	@echo "→ Pulling Ollama model $(OLLAMA_MODEL)…"
+	@ollama pull $(OLLAMA_MODEL)
+	@echo "✔ Ollama model ready"
+
+ollama-serve:
+	@echo "→ Starting Ollama server (keep this terminal open)…"
+	@ollama serve
 
 run:
-	@cd src && python model.py
+	@echo "→ Running model.py…"
+	@python src/core/model.py
+
+shell:
+	@echo "→ Entering project shell with .venv activated (run 'exit' to leave)…"
+	@. $(VENV)/bin/activate && exec $$SHELL
 
 clean:
-	@echo "→ Cleaning up…"
-	rm -rf $(VENV) build dist __pycache__ *.spec
-	@echo "✔ Done"
+	@echo "→ Cleaning workspace…"
+	@rm -rf $(VENV) .vscode build dist __pycache__ *.spec
+	@echo "✔ Clean complete"

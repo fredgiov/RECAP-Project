@@ -1,0 +1,244 @@
+/* Base reset and layout */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #121212;
+  color: white;
+  overflow: hidden;
+  font-family: monospace;
+}
+
+/* Top navigation bar */
+#app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3rem;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+#app-header nav {
+  display: flex;
+  width: 100%;
+  max-width: 800px;
+}
+#app-header nav a,
+#app-header nav button {
+  flex: 1;
+  text-align: center;
+  color: white;
+  background: none;
+  border: none;
+  text-decoration: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: background 0.3s ease;
+}
+#app-header nav a:hover,
+#app-header nav button:hover {
+  background: rgba(255, 224, 196, 0.2);
+}
+
+/* Background canvas */
+#background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Splash screen */
+#splash-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  z-index: 2;
+}
+#splash-text {
+  font-family: monospace;
+  font-size: 1.5rem;
+  padding: 1rem 2rem;
+  border: 2px solid white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: border-color 1.5s ease, transform 1.5s ease;
+}
+#splash-container:hover #splash-text {
+  border-color: #ffe0c4;
+  transform: scale(1.05);
+}
+
+/* Centered blob */
+#blob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle at 60% 40%, #ffe0c4, peachpuff);
+  border-radius: 50%;
+  z-index: 1;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+#blob.blob-pressed {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Chat bubble container */
+#chat-container {
+  position: absolute;
+  bottom: 6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 400px;
+
+  /* fixed shorter height for iMessage look */
+  height: 29vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column; /* newest at bottom */
+  gap: 0.5rem;
+  z-index: 5;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+/* Custom scrollbar styling */
+#chat-container::-webkit-scrollbar {
+  width: 6px;
+}
+#chat-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+#chat-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+#chat-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  line-height: 1.2;
+  max-width: 70%;
+  position: relative;
+  pointer-events: auto;
+}
+
+/* Assistant bubble with tail */
+.message.assistant {
+  background: rgba(255,224,196,0.8);
+  color: #121212;
+  align-self: flex-start;
+  margin-left: 0.5rem;
+}
+.message.assistant::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-right: 8px solid rgba(255,224,196,0.8);
+  border-bottom: 8px solid transparent;
+}
+
+/* User bubble with tail */
+.message.user {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  align-self: flex-end;
+  margin-right: 0.5rem;
+}
+.message.user::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-left: 8px solid rgba(255,255,255,0.1);
+  border-bottom: 8px solid transparent;
+}
+
+/* Arrow animation from user bubble */
+.message.user.arrow-up::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 2px;
+  height: 2rem;
+  background: white;
+  transform: translateX(-50%) scaleY(1);
+  animation: arrow-up 0.6s forwards;
+}
+@keyframes arrow-up {
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-1rem) scaleY(0.2);
+  }
+}
+
+/* Text input */
+#text-input {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 400px;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-family: monospace;
+  font-size: 1rem;
+  outline: none;
+  z-index: 5;
+  display: none;
+}
+
+/* Mic button */
+#mic-btn {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4rem;
+  height: 4rem;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe0c4 0%, peachpuff 80%);
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+#mic-btn img {
+  width: 50%;
+  height: auto;
+}

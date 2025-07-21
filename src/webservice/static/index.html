@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>RECAP</title>
+    <link rel="icon" href="/static/favicon.ico" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <!-- Vanta.js Fog effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://unpkg.com/vanta/dist/vanta.fog.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header id="app-header">
+      <nav>
+        <a href="myclasses.html">My Classes</a>
+        <a href="edit.html">Edit</a>
+        <a href="login.html">Log In</a>
+        <button id="toggle-button">Toggle</button>
+        <button id="end-button">End</button>
+      </nav>
+    </header>
+
+    <!-- Animated background container -->
+    <div id="background"></div>
+
+    <!-- Splash screen -->
+    <div id="splash-container">
+      <div id="splash-text">Click here to start RECAP</div>
+    </div>
+
+    <!-- Blob face (hidden until start) -->
+    <div id="blob"></div>
+
+    <!-- Chat container (hidden until start) -->
+    <div id="chat-container"></div>
+
+    <!-- Text input (hidden until toggle to text mode) -->
+    <input type="text" id="text-input" placeholder="Type your message..." />
+
+    <!-- Mic button (hidden until start & voice mode) -->
+    <button id="mic-btn"><img src="" alt="Record"></button>
+
+    <!-- Sounds -->
+    <audio id="startup-sound" src="../sounds/start.mp3"></audio>
+    <audio id="poweroff-sound" src="../sounds/stop.mp3" preload="auto"></audio>
+    <audio id="presson-sound" src="../sounds/presson.mp3" preload="auto"></audio>
+    <audio id="pressoff-sound" src="../sounds/pressoff.mp3" preload="auto"></audio>
+
+    <!-- App logic -->
+    <script src="main.js"></script>
+    <!-- Initialize Vanta.FOG -->
+    <script>
+        window.vanta = VANTA.FOG({
+            el: "#background",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            highlightColor: 0xF5F5DC,
+            midtoneColor: 0xCC5500,
+            baseColor: 0x222222,
+            blurFactor: 0.6,
+            zoom: 1.5,
+            speed: 0.5,
+        });
+    </script>
+</body>
+</html>
