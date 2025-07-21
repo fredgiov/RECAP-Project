@@ -28,12 +28,12 @@ jobs:
             echo "✅ TARGET_REPO_TOKEN is present"
           fi
 
-          echo "🔍 Verifying final git command input..."
-          REMOTE_URL="https://x-access-token:$TARGET_REPO_TOKEN@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git"
-          echo "REMOTE_URL is: $REMOTE_URL"
+          echo "🔐 Setting credentials..."
+          git config --global credential.helper store
+          echo "https://x-access-token:$TARGET_REPO_TOKEN@github.com" > ~/.git-credentials
 
-          echo "🔗 Adding Jetson_Nano_Projects as a remote..."
-          git remote add mirror "$REMOTE_URL"
+          echo "📦 Adding mirror remote..."
+          git remote add mirror https://github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
 
           echo "🚀 Pushing to mirror..."
           git push mirror main --force
