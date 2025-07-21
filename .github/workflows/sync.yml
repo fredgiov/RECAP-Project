@@ -17,6 +17,13 @@ jobs:
         env:
           TARGET_REPO_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
+          echo "Token begins with: ${TARGET_REPO_TOKEN:0:4}"
+          if [ -z "$TARGET_REPO_TOKEN" ]; then
+          echo "❌ TARGET_REPO_TOKEN is EMPTY"
+          exit 1
+          else
+            echo "✅ TARGET_REPO_TOKEN is set"
+          fi
           # Set your GitHub name and email so Git knows who's pushing
           git config --global user.name "Federico Giovannitti"
           git config --global user.email "fredgiov@udel.edu"
