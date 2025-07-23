@@ -20,23 +20,48 @@ polly = boto3.client(
 
 # ─── 3) Map ISO language codes to Polly VoiceIds ────────────────────────────
 VOICE_MAP = {
-    "en":    "Joanna",    # US English
-    "en-gb": "Amy",       # British English
-    "es":    "Lucia",     # Castilian Spanish
-    "es-us": "Lupe",      # Latin American Spanish
-    "fr":    "Mathieu",   # French
-    "de":    "Vicki",     # German
-    "it":    "Carla",     # Italian
-    "pt":    "Vitoria",   # Portuguese (pt-PT)
-    "ja":    "Mizuki",    # Japanese
-    "ko":    "Seoyeon",   # Korean
-    "zh":    "Zhiyu",     # Mandarin Chinese
-    "hi":    "Aditi",     # Hindi
-    "ar":    "Zeina",     # Arabic
-    "nl":    "Lotte",     # Dutch
-    "pl":    "Ewa",       # Polish
-    "tr":    "Filiz",     # Turkish
-    # …add more as needed
+    "arb": "Zeina",
+    "ar-AE": "Hala",
+    "nl-BE": "Lisa",
+    "ca-ES": "Arlet",
+    "cs-CZ": "Jitka",
+    "yue-CN": "Hiujin",
+    "cmn-CN": "Zhiyu",
+    "da-DK": "Naja",
+    "nl-NL": "Laura",
+    "en-AU": "Nicole",
+    "en-GB": "Amy",
+    "en-IN": "Aditi",
+    "en-IE": "Niamh",
+    "en-NZ": "Aria",
+    "en-SG": "Jasmine",
+    "en-ZA": "Ayanda",
+    "en-US": "Danielle",
+    "en-GB-WLS": "Geraint",
+    "fi-FI": "Suvi",
+    "fr-FR": "Celine",
+    "fr-BE": "Isabelle",
+    "fr-CA": "Chantal",
+    "de-DE": "Marlene",
+    "de-AT": "Hannah",
+    "de-CH": "Sabrina",
+    "hi-IN": "Kajal",
+    "is-IS": "Dora",
+    "it-IT": "Carla",
+    "ja-JP": "Mizuki",
+    "ko-KR": "Seoyeon",
+    "nb-NO": "Liv",
+    "pl-PL": "Ewa",
+    "pt-BR": "Camila",
+    "pt-PT": "Ines",
+    "ro-RO": "Carmen",
+    "ru-RU": "Tatyana",
+    "es-ES": "Conchita",
+    "es-MX": "Mia",
+    "es-US": "Lupe",
+    "sv-SE": "Astrid",
+    "tr-TR": "Filiz",
+    "cy-GB": "Gwyneth",
 }
 
 def _normalize_lang(code: str) -> str:
