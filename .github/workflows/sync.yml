@@ -13,7 +13,7 @@ jobs:
       - name: Checkout your code
         uses: actions/checkout@v3
 
-      - name: Push code to Organization Mirror Repo
+      - name: Sync code to Organization Mirror Repo
         env:
           TARGET_REPO_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
@@ -24,12 +24,17 @@ jobs:
           if [ -z "$TARGET_REPO_TOKEN" ]; then
             echo "❌ TARGET_REPO_TOKEN is EMPTY"
             exit 1
-          else
-            echo "✅ TARGET_REPO_TOKEN is present"
           fi
 
-          echo "📦 Adding mirror remote with token embedded in URL..."
-          git remote add mirror "https://x-access-token:$TARGET_REPO_TOKEN@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git"
+          echo "🔄 Removing existing remotes if any..."
+          git remote remove mirror || true
+          git remote remove origin || true
+
+          echo "📦 Adding remote with token..."
+          git remote add mirror "https://x-access-token:${TARGET_REPO_TOKEN}@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git"
+
+          echo "🔍 Verifying remote URL..."
+          git remote -v
 
           echo "🚀 Pushing to mirror..."
           git push mirror main --force
