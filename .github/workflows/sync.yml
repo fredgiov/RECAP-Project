@@ -13,7 +13,7 @@ jobs:
       - name: Checkout your code
         uses: actions/checkout@v3
 
-      - name: Push code to Repo B
+      - name: Push code to Organization Mirror Repo
         env:
           TARGET_REPO_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
         run: |
@@ -28,12 +28,8 @@ jobs:
             echo "✅ TARGET_REPO_TOKEN is present"
           fi
 
-          echo "🔐 Setting credentials..."
-          git config --global credential.helper store
-          echo "https://x-access-token:$TARGET_REPO_TOKEN@github.com" > ~/.git-credentials
-
-          echo "📦 Adding mirror remote..."
-          git remote add mirror https://github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
+          echo "📦 Adding mirror remote with token embedded in URL..."
+          git remote add mirror https://x-access-token:$TARGET_REPO_TOKEN@github.com/University-of-Delaware-IT-ATS/Jetson_Nano_Projects.git
 
           echo "🚀 Pushing to mirror..."
           git push mirror main --force
