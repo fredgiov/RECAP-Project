@@ -1,0 +1,202 @@
+Course: Advanced Training Techniques - CPEG484
+Professor: Professor K
+Class Day: Monday, April 21, 2025
+Lecture Topic: Introduction to Advanced Model Training
+
+Expanded Class Outline:
+1. Introduction & Motivation (~15 min)
+Why training techniques matter in modern AI development.
+
+Real-world failures due to poor training/data quality.
+
+2. The AI Model Training Lifecycle (~30 min)
+Full cycle: data collection → preprocessing → model selection → training → evaluation → deployment → monitoring.
+
+Human-in-the-loop refinement loops in high-stakes domains (healthcare, finance).
+
+3. Deep Dive into Learning Paradigms (~45 min)
+Supervised Learning: Labeling constraints, bias in annotations, imbalance handling.
+
+Unsupervised Learning: Clustering, dimensionality reduction, anomaly detection.
+
+Reinforcement Learning (RL): State-action-reward dynamics, sparse rewards, exploration strategies.
+
+Small group activity: Identify learning paradigms used in self-driving cars, virtual assistants, and fraud detection.
+
+4. Evaluation Metrics Workshop (~30 min)
+Beyond accuracy: ROC-AUC, log loss, confusion matrix breakdown.
+
+Demo: Interpret different evaluation metrics on a toy binary classifier.
+
+5. Data Quality & Preprocessing (~30 min)
+Outlier detection, normalization, missing data imputation.
+
+Impact of label noise and distribution shift.
+
+Comparison of training outcomes on raw vs cleaned datasets.
+
+6. Lab: Dataset Diagnosis Tool (~20 min)
+Students run scikit-learn or TensorFlow’s data validation tools on a dirty dataset.
+
+Identify issues (duplicates, imbalance, skew).
+
+7. Discussion & Wrap-up (~10 min)
+Debrief: Why good data beats a better model.
+
+Open Q&A
+
+Assignment:
+Read: “On the Importance of Data Quality in AI”
+
+Write: 1-page comparison of supervised vs unsupervised learning with examples.
+
+Optional: Watch “Data-Centric AI” by Andrew Ng
+
+Course: Advanced Training Techniques - CPEG484
+Class Day: Wednesday, April 23, 2025
+Lecture Topic: Model Architectures and Transfer Learning
+
+Expanded Class Outline:
+1. Architecture Overview (~30 min)
+CNNs: Convolutions, pooling, receptive fields, object detection.
+
+RNNs & LSTMs: Sequence modeling, gradient vanishing/exploding issues.
+
+Transformers: Positional encoding, multi-head self-attention, scalability.
+
+2. Shallow vs Deep Models (~20 min)
+VC dimension, expressiveness vs generalization.
+
+Practical considerations: memory, latency, overfitting risk.
+
+3. Hands-on Breakout Session (~30 min)
+Students visualize attention heads in a Transformer via BERTviz or similar tools.
+
+Dissect feature maps in CNN layers using Keras.
+
+4. Transfer Learning: Theory and Use Cases (~40 min)
+Historical context: ImageNet pretraining revolution.
+
+NLP: ELMo → BERT → T5 → GPT.
+
+Example walkthrough: Swapping out classification head in a pretrained ResNet.
+
+5. Fine-Tuning vs Feature Extraction (~20 min)
+Tradeoffs: computation, data needs, flexibility.
+
+Freeze/unfreeze strategies and layer-by-layer control.
+
+6. Lab: Fine-tuning BERT on IMDB (~30 min)
+Students load HuggingFace BERT, modify classification head, fine-tune on 1k IMDB samples.
+
+Compare validation loss curves for frozen vs unfrozen base.
+
+7. Pitfalls (~10 min)
+Catastrophic forgetting
+
+Domain mismatch and adaptation strategies (e.g., domain adversarial training)
+
+Assignment:
+Choose any model on HuggingFace.
+
+Write a paragraph: what layers would change to adapt it to a different domain/task.
+
+Include tokenizer adjustments if needed.
+
+Course: Advanced Training Techniques - CPEG484
+Class Day: Friday, April 25, 2025
+Lecture Topic: Optimization Algorithms and Training Schedules
+
+Expanded Class Outline:
+1. Gradient Descent Refresher (~15 min)
+Deriving the update rule for simple regression by hand.
+
+2. Optimizer Comparison (~30 min)
+SGD vs SGD + Momentum
+
+Adam, AdamW, RMSProp
+
+Graph: convergence curves, noise tolerance, memory cost.
+
+3. Loss Functions (~30 min)
+Discuss loss surface properties, convexity, and gradients.
+
+Visualize Cross-Entropy, MSE, MAE, Huber with examples.
+
+When to use each (e.g., Huber in robust regression tasks).
+
+4. Learning Rate Strategies (~30 min)
+Cosine annealing, warm restarts, cyclic learning rates.
+
+Impact on convergence: demo training a ResNet with different schedules.
+
+5. Regularization Masterclass (~30 min)
+L1/L2 penalties
+
+Dropout: theoretical justification and empirical benefit.
+
+BatchNorm: normalization and regularization side effect.
+
+6. Hands-On Lab (~35 min)
+Create a custom training loop in PyTorch
+
+Students implement variable learning rate and log loss
+
+Plot: Adam vs SGD performance, add dropout toggle and track effects.
+
+7. Debugging Training Instability (~10 min)
+Nan gradients, loss divergence, learning rate explosions
+
+Assignment:
+Fine-tune LR on any public Kaggle dataset.
+
+300-word reflection: how different learning rates impacted loss, convergence, and generalization.
+
+Course: Advanced Training Techniques - CPEG484
+Class Day: Wednesday, April 30, 2025
+Lecture Topic: Large Language Models and Alignment Techniques
+
+Expanded Class Outline:
+1. Intro to Alignment (~20 min)
+What “alignment” means in machine learning.
+
+Risks: hallucination, offensive outputs, misuse
+
+2. Failures of Naive Fine-Tuning (~20 min)
+GPT-2 releasing misinformation
+
+Role of emergent behavior in large models
+
+3. RLHF (Reinforcement Learning with Human Feedback) (~40 min)
+Explain the full pipeline: prompt → base model → preference model → reward modeling → PPO fine-tuning.
+
+Technical deep dive into reward shaping.
+
+Tools: TRL library, OpenAI PPO trainer
+
+4. Prompt Engineering vs System Alignment (~25 min)
+Examples of zero-shot and few-shot prompting
+
+Role of safety mechanisms in decoder outputs
+
+5. Case Studies (~35 min)
+InstructGPT: reward model tuning
+
+Claude: constitutional principles, critique-respond pipeline
+
+Debrief: what worked, what didn’t
+
+6. Group Discussion (~30 min)
+Debate: Can LLMs be aligned without human oversight?
+
+What’s the “hard alignment” problem?
+
+7. Ethical Considerations (~20 min)
+Who decides what “aligned” means?
+
+AI behavior in conflict zones, education, therapy
+
+Assignment:
+2 paragraphs: Can RLHF align LLMs with human values?
+
+Include 1 real-world case (ChatGPT misbehavior, Bing AI fiasco, etc.)
