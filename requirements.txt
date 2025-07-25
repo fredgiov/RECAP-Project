@@ -6,6 +6,7 @@ soundfile>=0.10.3.post1
 numpy>=1.25.2                # let it float up into 1.x — coqui-tts on PyPI will pull in the correct range
 torch>=2.0.1
 torchaudio>=2.0.2
+InquirerPy
 
 # — Whisper ASR
 openai-whisper>=20230117

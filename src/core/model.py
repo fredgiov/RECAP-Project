@@ -11,13 +11,13 @@ import whisper
 import ollama
 import threading
 from colorama import Fore, Style, init
-from src.core.speak import speak
+from speak import speak, VOICE_MAP, USER_VARIANT_CHOICE
 from pynput import keyboard
 from pynput.keyboard import Listener
-from typing import Tuple, Any, Dict
+from typing import Tuple, Any, Dict, Optional
 
 # Initialize colorama
-init(autoreset = True)
+init(autoreset=True)
 
 # Ensure macOS function ------------------
 def ensureMac() -> None:
@@ -28,11 +28,11 @@ def ensureMac() -> None:
 def determine_device() -> Tuple[Any, str]:
     if torch.backends.mps.is_available():
         device = "mps"
-    else: 
+    else:
         device = "cpu"
   
-    print(f"{Fore.CYAN}Loading Whisper small on CPU to patch sparse weights...{Style.RESET_ALL}")
-    asr = whisper.load_model("small", device = "cpu")
+    print(f"{Fore.CYAN}Loading Whisper medium on CPU to patch sparse weights...{Style.RESET_ALL}")
+    asr = whisper.load_model("medium", device="cpu")
     # Patching sparse buffers now
     for name, buf in list(asr.named_buffers()):
         if buf.layout == torch.sparse_coo:
@@ -45,7 +45,7 @@ def determine_device() -> Tuple[Any, str]:
 # Detect microphone function -------------
 def determineIf_mic_available() -> bool:
     try:
-        input_devices = [device for device in sd.query_devices() if device.get("max_input_channels", 0) > 0]
+        input_devices = [d for d in sd.query_devices() if d.get("max_input_channels",0)>0]
         has_mic = len(input_devices) > 0
     except Exception:
         has_mic = False
@@ -53,11 +53,115 @@ def determineIf_mic_available() -> bool:
         print(f"{Fore.YELLOW}[Warning] No microphone detected. Voice mode disabled.{Style.RESET_ALL}")
     return has_mic
 
+# Language groups ------------------------
+LANGUAGE_GROUPS = {
+    "عربي":       ["arb","ar"],
+    "Nederlands": ["nl"],
+    "English":    ["en"],
+    "Català":     ["ca"],
+    "Čeština":    ["cs"],
+    "中文":        ["yue","cmn"],
+    "Dansk":      ["da"],
+    "Suomi":      ["fi"],
+    "Français":   ["fr"],
+    "Deutsch":    ["de"],
+    "हिन्दी":     ["hi"],
+    "Íslenska":   ["is"],
+    "日本語":      ["ja"],
+    "한국어":      ["ko"],
+    "Polski":     ["pl"],
+    "Português":  ["pt"],
+    "Română":     ["ro"],
+    "Русский":    ["ru"],
+    "Español":    ["es"],
+    "Svenska":    ["sv"],
+    "Türkçe":     ["tr"],
+    "Cymraeg":    ["cy"],
+}
+
+# Flag for language-picker override
+selecting_language = False
+
+def on_hotkey_start_language_selection():
+    """
+    Hotkey callback: stop any audio and signal the chat loop
+    to open the language picker on next iteration.
+    """
+    global selecting_language
+    sd.stop()
+    selecting_language = True
+
+def choose_language_variant() -> Optional[str]:
+    """
+    Block chat flow, stop audio, present a boxed menu to pick
+    a language and its variant, write choice into USER_VARIANT_CHOICE,
+    then unblock. Returns chosen locale code or None.
+    """
+    global selecting_language
+    selecting_language = True
+    sd.stop()
+
+    def clear():
+        # ANSI clear-screen
+        print("\033c", end="")
+
+    try:
+        # LANGUAGE selection
+        while True:
+            clear()
+            print("╔" + "═"*30 + " Select Language " + "═"*30 + "╗")
+            for i, name in enumerate(LANGUAGE_GROUPS, start=1):
+                print(f"║ {i:2}) {name:<20} ║")
+            print("║  c) Cancel                      ║")
+            print("╚" + "═"*70 + "╝")
+
+            sel = input("→ Choice: ").strip().lower()
+            if sel == "c":
+                return None
+            if not sel.isdigit() or not (1 <= (idx:=int(sel)) <= len(LANGUAGE_GROUPS)):
+                print("  ✗ Invalid; try again."); time.sleep(1); continue
+
+            lang_name = list(LANGUAGE_GROUPS)[idx-1]
+            bases = LANGUAGE_GROUPS[lang_name]
+
+            # VARIANT selection
+            while True:
+                clear()
+                print(f"╔{'═'*30} Variants for {lang_name} {'═'*30}╗")
+                variants = sorted(
+                    code for code in VOICE_MAP
+                    if code.split("-",1)[0].lower() in {b.lower() for b in bases}
+                )
+                for j, code in enumerate(variants, start=1):
+                    print(f"║ {j:2}) {code:<8} → {VOICE_MAP[code]:<15} ║")
+                print("║ b) Back    c) Cancel          ║")
+                print("╚" + "═"*70 + "╝")
+
+                v = input("→ Variant: ").strip().lower()
+                if v == "b":
+                    break
+                if v == "c":
+                    return None
+                if not v.isdigit() or not (1 <= (vidx:=int(v)) <= len(variants)):
+                    print("  ✗ Invalid; try again."); time.sleep(1); continue
+
+                chosen = variants[vidx-1]
+                confirm = input(f"Confirm {lang_name} = {chosen}? (y/n): ").strip().lower()
+                if confirm == "y":
+                    base = chosen.split("-",1)[0]
+                    USER_VARIANT_CHOICE[base] = chosen
+                    clear()
+                    print(f"✔️  {lang_name} set to {chosen} ({VOICE_MAP[chosen]})"); time.sleep(1)
+                    return chosen
+                else:
+                    print("  ✗ Not confirmed; retry."); time.sleep(1)
+    finally:
+        selecting_language = False
+
 # Key Toggler Setup Function -------------
 def setup_hotkeys_and_listeners() -> Listener:
     global use_tts, use_voice
 
-    # Toggle modes
     def toggle_mode():
         global use_voice
         use_voice = not use_voice
@@ -68,45 +172,46 @@ def setup_hotkeys_and_listeners() -> Listener:
         global use_tts
         use_tts = not use_tts
         state = "ON" if use_tts else "OFF"
-        print(f"\n{Fore.MAGENTA}*** Voice output turned {state} ***{Style.RESET_ALL}")
+        print(f"\n{Fore.MAGENTA}*** Voice output {state} ***{Style.RESET_ALL}")
 
     def stop_speaking():
         sd.stop()
-        print(f"\n{Fore.MAGENTA}*** Current voice output stopped ***{Style.RESET_ALL}")
+        print(f"\n{Fore.MAGENTA}*** Voice stopped ***{Style.RESET_ALL}")
 
     hotkey_mode = keyboard.HotKey(
         keyboard.HotKey.parse('<cmd>+/'),
         toggle_mode
     )
-
     hotkey_tts = keyboard.HotKey(
         keyboard.HotKey.parse('<cmd>+\\'),
         toggle_tts
-    )  
-
+    )
     hotkey_stopSpeaking = keyboard.HotKey(
         keyboard.HotKey.parse('<cmd>+d'),
         stop_speaking
+    )
+    hotkey_chooseLang = keyboard.HotKey(
+        keyboard.HotKey.parse('<cmd>+`'),
+        on_hotkey_start_language_selection
     )
 
     def on_press(key):
         hotkey_mode.press(key)
         hotkey_tts.press(key)
         hotkey_stopSpeaking.press(key)
+        hotkey_chooseLang.press(key)
 
     def on_release(key):
         hotkey_mode.release(key)
         hotkey_tts.release(key)
         hotkey_stopSpeaking.release(key)
+        hotkey_chooseLang.release(key)
 
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.daemon = True
     listener.start()
 
-    print(
-        f"{Fore.CYAN}Press Cmd+/ at any time to toggle between voice/text input, Cmd+\ to toggle voice output and Cmd+d to turn off current voice output.{Style.RESET_ALL}"
-    )
-
+    print(f"{Fore.CYAN}Hotkeys: Cmd+/ toggle input, Cmd+\\ toggle TTS, Cmd+d stop audio, Cmd+` choose language{Style.RESET_ALL}")
     return listener
 
 # Get voice input function ---------------
@@ -116,51 +221,48 @@ def get_voice_input(
     fs: int = 16000,
     chunk_ms: int = 30,
     threshold: float = 500.0,
-) -> tuple[str, str]:
+) -> Tuple[str,str]:
     """
     Record until silence or timeout, then transcribe via Whisper.
     Returns (text, language_code).
     """
+    # If language selection in progress, run it first
+    if selecting_language:
+        choose_language_variant()
+        return "", "en"
+
     chunk_samples = int(fs * chunk_ms / 1000)
-    max_silent_frames = int(silence_duration * 1000 / chunk_ms)
+    max_silent = int(silence_duration*1000/chunk_ms)
+    frames, silent_count, started = [], 0, False
+    start = time.time()
 
-    frames = []
-    silent_count = 0
-    speaking_started = False
-    start_time = time.time()
-
-    print(f"{Fore.CYAN}Listening... speak, then stay silent to end.{Style.RESET_ALL}")
-    with sd.InputStream(samplerate = fs, channels = 1, dtype = "int16") as stream:
+    print(f"{Fore.CYAN}Listening...{Style.RESET_ALL}")
+    with sd.InputStream(samplerate=fs, channels=1, dtype="int16") as stream:
         while True:
             data, _ = stream.read(chunk_samples)
             frames.append(data.copy())
             amp = np.abs(data).mean()
             if amp > threshold:
-                speaking_started = True
-                silent_count = 0
-            elif speaking_started:
+                started, silent_count = True, 0
+            elif started:
                 silent_count += 1
-            if (speaking_started and silent_count >= max_silent_frames) or (time.time() - start_time > timeout):
+            if (started and silent_count>=max_silent) or (time.time()-start>timeout):
                 break
-  
-    recording = np.concatenate(frames, axis = 0)
-    with tempfile.NamedTemporaryFile(suffix = ".wav", delete = False) as tmp:
-        sf.write(tmp.name, recording, fs)
-        print(f"{Fore.BLUE}Transcribing with Whisper (small) on {device.upper()}...{Style.RESET_ALL}")
-        result = asr.transcribe(
-            tmp.name,
-            fp16 = (device != "cpu"),
-            condition_on_previous_text = False
-        )
+
+    wav = np.concatenate(frames,0)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        sf.write(tmp.name, wav, fs)
+        print(f"{Fore.BLUE}Transcribing...{Style.RESET_ALL}")
+        result = asr.transcribe(tmp.name, fp16=(device!="cpu"), condition_on_previous_text=False)
     os.remove(tmp.name)
 
-    text = result.get("text", "").strip()
-    lang = result.get("language", "en")
-    if text:
-        print(f"{Fore.YELLOW}You ({lang}): {text}{Style.RESET_ALL}")
+    txt = result.get("text","").strip()
+    lang = result.get("language","en")
+    if txt:
+        print(f"{Fore.YELLOW}You ({lang}): {txt}{Style.RESET_ALL}")
     else:
-        print(f"{Fore.RED}[Error] No speech detected or too quiet.{Style.RESET_ALL}")
-    return text, lang
+        print(f"{Fore.RED}No speech detected.{Style.RESET_ALL}")
+    return txt, lang
 
 # Load system content function -----------
 def load_system_content() -> str:
@@ -234,11 +336,16 @@ def greet() -> None:
 def chat(modelIn: str) -> None:
     try:
         while True:
+            # If hotkey triggered language pick, do it first
+            if selecting_language:
+                choose_language_variant()
+                continue
+
             if use_voice and has_mic:
                 try:
                     user_text, user_lang = get_voice_input()
                 except Exception:
-                    print(f"{Fore.YELLOW}[Warning] Voice failed, switching to text input for this turn.{Style.RESET_ALL}")
+                    print(f"{Fore.YELLOW}[Warning] Voice failed, switching to text input.{Style.RESET_ALL}")
                     user_text = input(f"{Fore.CYAN}[TEXT] > {Style.RESET_ALL}")
                     user_lang = "en"
             else:
