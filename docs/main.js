@@ -78,7 +78,7 @@ toggleBtn.onclick = () => {
 
 // Initialize UI state
 function initUI() {
-  appHeader.style.display = 'none';
+  appHeader.style.display = 'flex';
   splashContainer.style.display = 'flex';
   blob.style.display = 'none';
   chatContainer.style.display = 'none';
